@@ -111,7 +111,7 @@ email = email.format(h=h_res.to_html(index=False),
 date = datetime.datetime.now().date()
 
 sender_email = "mrkaye97@gmail.com"
-receiver_email = ["mrkaye97@gmail.com"]
+receiver_email = ["mrkaye97@gmail.com", "masonpropper@gmail.com"]
 password = str(sys.argv[1])
 
 message = MIMEMultipart("alternative")

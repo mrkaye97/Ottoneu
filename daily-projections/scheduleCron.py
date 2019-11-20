@@ -2,7 +2,7 @@ from crontab import CronTab
 
 my_cron = CronTab(user='matt')
 
-job = my_cron.new(command = '~/Google\ Drive/Carleton/Junior\ Year/Fantasy/venv/bin/python ~/Google\ Drive/Carleton/Junior\ Year/Fantasy/PointProj.py')
+job = my_cron.new(command = '~/Documents/GitHub/Ottoneu/venv/bin/python ~/Documents/GitHub/Ottoneu/daily-projections/PointProj.py')
 
 job.setall('0 8 * * *')
 

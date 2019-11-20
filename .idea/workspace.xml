@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="28be4866-fc39-4c5b-b304-de704b047632" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/daily-projections/PointProj.py" beforeDir="false" afterPath="$PROJECT_DIR$/daily-projections/PointProj.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/daily-projections/scheduleCron.py" beforeDir="false" afterPath="$PROJECT_DIR$/daily-projections/scheduleCron.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -12,11 +12,23 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/daily-projections/PointProj.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="126">
-              <caret line="6" column="29" lean-forward="true" selection-start-line="6" selection-start-column="29" selection-end-line="6" selection-end-column="29" />
+            <state relative-caret-position="2057">
+              <caret line="101" column="46" lean-forward="true" selection-start-line="101" selection-start-column="46" selection-end-line="101" selection-end-column="46" />
+              <folding>
+                <element signature="e#0#15#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/daily-projections/scheduleCron.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="84">
+              <caret line="4" column="130" lean-forward="true" selection-start-line="4" selection-start-column="130" selection-end-line="4" selection-end-column="130" />
             </state>
           </provider>
         </entry>
@@ -31,6 +43,7 @@
       <list>
         <option value="$PROJECT_DIR$/draft/draft2020.py" />
         <option value="$PROJECT_DIR$/daily-projections/PointProj.py" />
+        <option value="$PROJECT_DIR$/daily-projections/scheduleCron.py" />
       </list>
     </option>
   </component>
@@ -65,6 +78,17 @@
               <item name="Ottoneu" type="b2602c69:ProjectViewProjectNode" />
               <item name="Ottoneu" type="462c0819:PsiDirectoryNode" />
               <item name="daily-projections" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="Ottoneu" type="b2602c69:ProjectViewProjectNode" />
+              <item name="Ottoneu" type="462c0819:PsiDirectoryNode" />
+              <item name="venv" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="Ottoneu" type="b2602c69:ProjectViewProjectNode" />
+              <item name="Ottoneu" type="462c0819:PsiDirectoryNode" />
+              <item name="venv" type="462c0819:PsiDirectoryNode" />
+              <item name="bin" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -159,12 +183,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1574263654061</updated>
-      <workItem from="1574263655715" duration="964000" />
+      <workItem from="1574263655715" duration="1491000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="964000" />
+    <option name="totallyTimeSpent" value="1491000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="0" />
@@ -197,6 +221,17 @@
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/daily-projections/PointProj.py</url>
+          <line>28</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Ottoneu$draft2020.coverage" NAME="draft2020 Coverage Results" MODIFIED="1574264121710" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/draft" />
@@ -239,8 +274,18 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/daily-projections/PointProj.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="126">
-          <caret line="6" column="29" lean-forward="true" selection-start-line="6" selection-start-column="29" selection-end-line="6" selection-end-column="29" />
+        <state relative-caret-position="2057">
+          <caret line="101" column="46" lean-forward="true" selection-start-line="101" selection-start-column="46" selection-end-line="101" selection-end-column="46" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/daily-projections/scheduleCron.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="84">
+          <caret line="4" column="130" lean-forward="true" selection-start-line="4" selection-start-column="130" selection-end-line="4" selection-end-column="130" />
         </state>
       </provider>
     </entry>
