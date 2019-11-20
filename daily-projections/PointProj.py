@@ -7,6 +7,7 @@ import smtplib, ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import datetime
+import sys
 
 hitters = range(4, 15)
 pitchers = range(3, 13)
@@ -110,8 +111,8 @@ email = email.format(h=h_res.to_html(index=False),
 date = datetime.datetime.now().date()
 
 sender_email = "mrkaye97@gmail.com"
-receiver_email = ["mrkaye97@gmail.com", "masonpropper@gmail.com"]
-password = '1997GOOGLEmrk!'
+receiver_email = ["mrkaye97@gmail.com"]
+password = str(sys.argv[1])
 
 message = MIMEMultipart("alternative")
 message["Subject"] = 'Projections for ' + str(date)
