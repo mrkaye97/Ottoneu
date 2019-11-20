@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-ROOT_DIR = '/users/matt/Google Drive/Ottoneu'
+ROOT_DIR = '/users/matt/Documents/GitHub/Ottoneu'
 
 
 def point_proj(cols_to_use, points, depth, steamer, out):
@@ -39,8 +39,8 @@ point_proj(cols_to_use = ['Name', 'playerid', 'AB', 'H', '2B', '3B', 'HR', 'BB',
       out='hitters.csv')
 point_proj(cols_to_use = ['Name', 'playerid', 'IP', 'SO', 'H', 'BB', 'HBP', 'HR', 'SV', 'HD'],
       points=[7.4, 2.0, -2.6, -3.0, -3.0, -14.9, 5.0, 4.0],
-      depth='DepthChartsPitchers.csv',
-      steamer='SteamerPitchers.csv',
+      depth='https://raw.githubusercontent.com/mrkaye97/Ottoneu/master/data/DepthChartsPitchers.csv',
+      steamer='https://raw.githubusercontent.com/mrkaye97/Ottoneu/master/data/SteamerPitchers.csv',
       out='pitchers.csv')
 
 
