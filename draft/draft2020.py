@@ -28,6 +28,7 @@ def point_proj(cols_to_use, points, depth, steamer, out):
      .groupby(['Name', 'playerid'])
      .sum()
      .sort_values('tot', ascending=False)
+     .round({'tot': 2})
      .to_csv(os.path.join(ROOT_DIR, 'draft', out))
      )
 
