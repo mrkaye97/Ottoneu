@@ -1,6 +1,9 @@
 import pandas as pd
 import os
 import numpy as np
+import random
+from collections import Counter
+from pulp import *
 
 ROOT_DIR = '/users/matt/Documents/GitHub/Ottoneu'
 
@@ -75,7 +78,7 @@ def join_pos():
     (
         pd
         .merge(proj, pos, on='playerid')
-        .replace({'Pos' : { 'RF' : 'OF', 'LF' : 'OF', 'CF' : 'OF' }})
+        .replace({'Pos' : {'RF' : 'OF', 'LF' : 'OF', 'CF' : 'OF' }})
         .drop_duplicates()
         .to_csv(os.path.join(ROOT_DIR, 'draft', 'projections.csv'), index=False)
       )
@@ -103,12 +106,9 @@ def get_rep_lvl():
         .assign(PAR=lambda x: x.tot - x.rep)
         .assign(p = lambda x: x.PAR * 4500 / 39680)
         .sort_values('p', ascending=False)
+        .round(3)
         .to_csv(os.path.join(ROOT_DIR, 'draft', 'projections.csv'), index=False)
     )
-
-
-
-
 
 
 point_proj(cols_to_use = ['Name', 'playerid', 'AB', 'H', '2B', '3B', 'HR', 'BB', 'HBP', 'SB', 'CS'],
@@ -125,4 +125,5 @@ point_proj(cols_to_use = ['Name', 'playerid', 'IP', 'SO', 'H', 'BB', 'HBP', 'HR'
 join_pos()
 
 get_rep_lvl()
+
 
