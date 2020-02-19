@@ -8,12 +8,15 @@ from pulp import *
 ROOT_DIR = '/users/matt/Documents/GitHub/Ottoneu'
 
 
-def point_proj(cols_to_use, points, depth, steamer, out):
+def point_proj(cols_to_use, points, depth, steamer, tb, zips, out):
     depth = pd.read_csv(depth, dtype={'playerid': 'str'})
     steamer = pd.read_csv(steamer, dtype={'playerid': 'str'})
+    tb = pd.read_csv(tb, dtype={'playerid': 'str'})
+    zips = pd.read_csv(zips, dtype={'playerid': 'str'})
+
 
     df = (pd
-          .concat([depth, steamer], axis=0, sort=False)
+          .concat([depth, steamer, tb, zips], axis=0, sort=False)
           .groupby(['playerid', 'Name'])
           .mean()
           .reset_index(drop=False)
@@ -107,7 +110,7 @@ def get_rep_lvl():
         .assign(p = lambda x: x.PAR * 4500 / 39680)
         .sort_values('p', ascending=False)
         .round(3)
-        .to_csv(os.path.join(ROOT_DIR, 'draft', 'projections.csv'), index=False)
+        .to_csv(os.path.join(ROOT_DIR, 'draft', 'tempprojections.csv'), index=False)
     )
 
 
@@ -115,11 +118,15 @@ point_proj(cols_to_use = ['Name', 'playerid', 'AB', 'H', '2B', '3B', 'HR', 'BB',
       points = [-1.0, 5.6, 2.9, 5.7, 9.4, 3.0, 3.0, 1.9, -2.8],
       depth='https://raw.githubusercontent.com/mrkaye97/Ottoneu/master/data/DepthChartsHitters.csv',
       steamer='https://raw.githubusercontent.com/mrkaye97/Ottoneu/master/data/SteamerHitters.csv',
+      tb='https://www.fangraphs.com/projections.aspx?pos=all&stats=bat&type=thebat&team=0&lg=all&players=0',
+      zips='https://www.fangraphs.com/projections.aspx?pos=all&stats=bat&type=zips&team=0&lg=all&players=0',
       out='hitters.csv')
 point_proj(cols_to_use = ['Name', 'playerid', 'IP', 'SO', 'H', 'BB', 'HBP', 'HR', 'SV', 'HD'],
       points=[7.4, 2.0, -2.6, -3.0, -3.0, -12.3, 5.0, 4.0],
       depth='https://raw.githubusercontent.com/mrkaye97/Ottoneu/master/data/DepthChartsPitchers.csv',
       steamer='https://raw.githubusercontent.com/mrkaye97/Ottoneu/master/data/SteamerPitchers.csv',
+      tb='https://www.fangraphs.com/projections.aspx?pos=all&stats=pit&type=thebat&team=0&lg=all&players=0',
+      zips='https://www.fangraphs.com/projections.aspx?pos=all&stats=pit&type=zips&team=0&lg=all&players=0',
       out='pitchers.csv')
 
 join_pos()
