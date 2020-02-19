@@ -87,6 +87,7 @@ def join_pos():
 
 def get_rep_lvl():
 
+    #multiplied pitcher rep lvl by 5/6 to account for decrease in the innings cap from 1500 to 1250
     rep_lvl = pd.DataFrame.from_records({'Pos': ['C', '1B', '2B', 'SS', '3B', 'OF', 'SP', 'RP'], 'Lvl': [35, 27, 30, 32, 18, 84, 90, 61]})
 
     df = pd.read_csv(os.path.join(ROOT_DIR, 'draft', 'projections.csv'))
@@ -112,6 +113,10 @@ def get_rep_lvl():
         .to_csv(os.path.join(ROOT_DIR, 'draft', 'projections.csv'), index=False)
     )
 
+def discount():
+    df = pd.read_csv(os.path.join(ROOT_DIR, 'draft', 'projections.csv'))
+
+    zips2021 = 
 
 point_proj(cols_to_use = ['Name', 'playerid', 'AB', 'H', '2B', '3B', 'HR', 'BB', 'HBP', 'SB', 'CS'],
       points = [-1.0, 5.6, 2.9, 5.7, 9.4, 3.0, 3.0, 1.9, -2.8],
