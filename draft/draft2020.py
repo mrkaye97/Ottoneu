@@ -87,7 +87,7 @@ def join_pos():
 
 def get_rep_lvl():
 
-    rep_lvl = pd.DataFrame.from_records({'Pos': ['C', '1B', '2B', 'SS', '3B', 'OF', 'SP', 'RP'], 'Lvl': [35, 27, 30, 32, 18, 84, 108, 73]})
+    rep_lvl = pd.DataFrame.from_records({'Pos': ['C', '1B', '2B', 'SS', '3B', 'OF', 'SP', 'RP'], 'Lvl': [35, 27, 30, 32, 18, 84, 90, 61]})
 
     df = pd.read_csv(os.path.join(ROOT_DIR, 'draft', 'projections.csv'))
 
