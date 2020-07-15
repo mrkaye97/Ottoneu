@@ -1,0 +1,512 @@
+xwraa = ((xwoba - lgwoba)/wobascale)*pa,
+xbr = xwraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+xwar = (xbr + bsr + def + lg + rep) / rpw) %>%
+filter(season >= 2010) %>%
+select(playerid, name, season, team, pa, careerpa, babip, careerbabip, lgbabip, woba, xwoba, war, xwar) %>%
+arrange(desc(season), desc(xwar))
+temp <- df %>%
+group_by(playerid) %>%
+mutate(leadwar = lead(war, order_by = season)) %>%
+ungroup() %>%
+filter(season != 2019)
+#df %>% write.csv('/users/matt/downloads/xWAR.csv', row.names = F)
+l1 <- lm(leadwar ~ war, data = temp)
+l2 <- lm(leadwar ~ xwar, data = temp)
+l1 %>% summary()
+l2 %>% summary()
+source('~/Google Drive/Carleton/Baseball Research/xWAR.R')
+rm(list = ls())
+library(tidyverse)
+df <- read_csv('~/Google Drive/Carleton/Baseball Research/fangraphs_full_unmodified_hitters.csv') %>%
+rename_all(list(tolower))
+woba <- read_csv('~/Google Drive/Carleton/Baseball Research/woba_const.csv') %>%
+rename_all(list(tolower)) %>%
+select(season, woba, wobascale, 'r/pa', 'r/w') %>%
+rename(lgwoba = woba,
+rpa = 'r/pa',
+rpw = 'r/w')
+pf <- read_csv('~/Google Drive/Carleton/Baseball Research/park_factor.csv') %>%
+rename_all(list(tolower)) %>%
+select(2:3)
+lgbabip <- df %>%
+filter(pa > 400) %>%
+group_by(season) %>%
+summarize(lgbabip = sum(babip * pa / sum(pa, na.rm = T), na.rm=T))
+df <- df %>%
+filter(season > 1980) %>%
+select(season, name, playerid, team, pa, babip, woba, wrc, bsr, off, def, rep, lg, war) %>%
+inner_join(lgbabip, by = 'season') %>%
+inner_join(woba, by = 'season') %>%
+inner_join(pf, by = 'team') %>%
+group_by(season) %>%
+mutate(wrcpa = sum(wrc) / sum(pa)) %>%
+ungroup() %>%
+mutate(basic = basic / 100,
+wraa = ((woba - lgwoba)/wobascale)*pa,
+br = wraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+fwar = (br + bsr + def + lg + rep) / rpw) %>%
+select(playerid, name, season, everything()) %>%
+arrange(playerid, season) %>%
+filter(pa > 300) %>%
+group_by(playerid) %>%
+mutate(careerpa = cumsum(pa),
+careerbabip = cummean(babip)) %>%
+ungroup() %>%
+mutate(weight = (1 / (1 + exp(-.005*(careerpa - 1000)))),
+babipnum = weight*careerbabip + (1-weight)*lgbabip,
+xwoba = woba * (mean(babipnum, babip) / babip),
+xwraa = ((xwoba - lgwoba)/wobascale)*pa,
+xbr = xwraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+xwar = (xbr + bsr + def + lg + rep) / rpw) %>%
+filter(season >= 2010) %>%
+select(playerid, name, season, team, pa, careerpa, babip, careerbabip, lgbabip, woba, xwoba, war, xwar) %>%
+arrange(desc(season), desc(xwar))
+temp <- df %>%
+group_by(playerid) %>%
+mutate(leadwar = lead(war, order_by = season)) %>%
+ungroup() %>%
+filter(season != 2019)
+#df %>% write.csv('/users/matt/downloads/xWAR.csv', row.names = F)
+l1 <- lm(leadwar ~ war, data = temp)
+l2 <- lm(leadwar ~ xwar, data = temp)
+rm(list = ls())
+library(tidyverse)
+df <- read_csv('~/Google Drive/Carleton/Baseball Research/fangraphs_full_unmodified_hitters.csv') %>%
+rename_all(list(tolower))
+woba <- read_csv('~/Google Drive/Carleton/Baseball Research/woba_const.csv') %>%
+rename_all(list(tolower)) %>%
+select(season, woba, wobascale, 'r/pa', 'r/w') %>%
+rename(lgwoba = woba,
+rpa = 'r/pa',
+rpw = 'r/w')
+pf <- read_csv('~/Google Drive/Carleton/Baseball Research/park_factor.csv') %>%
+rename_all(list(tolower)) %>%
+select(2:3)
+lgbabip <- df %>%
+filter(pa > 400) %>%
+group_by(season) %>%
+summarize(lgbabip = sum(babip * pa / sum(pa, na.rm = T), na.rm=T))
+df <- df %>%
+filter(season > 1980) %>%
+select(season, name, playerid, team, pa, babip, woba, wrc, bsr, off, def, rep, lg, war) %>%
+inner_join(lgbabip, by = 'season') %>%
+inner_join(woba, by = 'season') %>%
+inner_join(pf, by = 'team') %>%
+group_by(season) %>%
+mutate(wrcpa = sum(wrc) / sum(pa)) %>%
+ungroup() %>%
+mutate(basic = basic / 100,
+wraa = ((woba - lgwoba)/wobascale)*pa,
+br = wraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+fwar = (br + bsr + def + lg + rep) / rpw) %>%
+select(playerid, name, season, everything()) %>%
+arrange(playerid, season) %>%
+filter(pa > 300) %>%
+group_by(playerid) %>%
+mutate(careerpa = cumsum(pa),
+careerbabip = cummean(babip)) %>%
+ungroup() %>%
+mutate(weight = (1 / (1 + exp(-.005*(careerpa - 1000)))),
+babipnum = weight*careerbabip + (1-weight)*lgbabip,
+xwoba = woba * (mean(c(babipnum, babip)) / babip),
+xwraa = ((xwoba - lgwoba)/wobascale)*pa,
+xbr = xwraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+xwar = (xbr + bsr + def + lg + rep) / rpw) %>%
+filter(season >= 2010) %>%
+select(playerid, name, season, team, pa, careerpa, babip, careerbabip, lgbabip, woba, xwoba, war, xwar) %>%
+arrange(desc(season), desc(xwar))
+temp <- df %>%
+group_by(playerid) %>%
+mutate(leadwar = lead(war, order_by = season)) %>%
+ungroup() %>%
+filter(season != 2019)
+#df %>% write.csv('/users/matt/downloads/xWAR.csv', row.names = F)
+l1 <- lm(leadwar ~ war, data = temp)
+l2 <- lm(leadwar ~ xwar, data = temp)
+View(df)
+l1 %>% summary()
+l2 %>% summary()
+rm(list = ls())
+library(tidyverse)
+df <- read_csv('~/Google Drive/Carleton/Baseball Research/fangraphs_full_unmodified_hitters.csv') %>%
+rename_all(list(tolower))
+woba <- read_csv('~/Google Drive/Carleton/Baseball Research/woba_const.csv') %>%
+rename_all(list(tolower)) %>%
+select(season, woba, wobascale, 'r/pa', 'r/w') %>%
+rename(lgwoba = woba,
+rpa = 'r/pa',
+rpw = 'r/w')
+pf <- read_csv('~/Google Drive/Carleton/Baseball Research/park_factor.csv') %>%
+rename_all(list(tolower)) %>%
+select(2:3)
+lgbabip <- df %>%
+filter(pa > 400) %>%
+group_by(season) %>%
+summarize(lgbabip = sum(babip * pa / sum(pa, na.rm = T), na.rm=T))
+df <- df %>%
+filter(season > 1980) %>%
+select(season, name, playerid, team, pa, babip, woba, wrc, bsr, off, def, rep, lg, war) %>%
+inner_join(lgbabip, by = 'season') %>%
+inner_join(woba, by = 'season') %>%
+inner_join(pf, by = 'team') %>%
+group_by(season) %>%
+mutate(wrcpa = sum(wrc) / sum(pa)) %>%
+ungroup() %>%
+mutate(basic = basic / 100,
+wraa = ((woba - lgwoba)/wobascale)*pa,
+br = wraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+fwar = (br + bsr + def + lg + rep) / rpw) %>%
+select(playerid, name, season, everything()) %>%
+arrange(playerid, season) %>%
+filter(pa > 300) %>%
+group_by(playerid) %>%
+mutate(careerpa = cumsum(pa),
+careerbabip = cummean(babip)) %>%
+ungroup() %>%
+mutate(weight = (1 / (1 + exp(-.005*(careerpa - 1000)))),
+babipnum = weight*careerbabip + (1-weight)*lgbabip,
+xwoba = woba * (babipnum / babip),
+xwraa = ((xwoba - lgwoba)/wobascale)*pa,
+xbr = xwraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+xwar = (xbr + bsr + def + lg + rep) / rpw) %>%
+filter(season >= 2010) %>%
+select(playerid, name, season, team, pa, careerpa, babip, careerbabip, lgbabip, woba, xwoba, war, xwar) %>%
+arrange(desc(season), desc(xwar))
+temp <- df %>%
+group_by(playerid) %>%
+mutate(leadwar = lead(war, order_by = season)) %>%
+ungroup() %>%
+filter(season != 2019)
+#df %>% write.csv('/users/matt/downloads/xWAR.csv', row.names = F)
+l1 <- lm(leadwar ~ war, data = temp)
+l2 <- lm(leadwar ~ xwar, data = temp)
+l1
+l1 %>% summary()
+l2 %>% summary()
+plot(l2$fitted.values, l2$residuals)
+View(df)
+rm(list = ls())
+library(tidyverse)
+df <- read_csv('~/Google Drive/Carleton/Baseball Research/fangraphs_full_unmodified_hitters.csv') %>%
+rename_all(list(tolower))
+woba <- read_csv('~/Google Drive/Carleton/Baseball Research/woba_const.csv') %>%
+rename_all(list(tolower)) %>%
+select(season, woba, wobascale, 'r/pa', 'r/w') %>%
+rename(lgwoba = woba,
+rpa = 'r/pa',
+rpw = 'r/w')
+pf <- read_csv('~/Google Drive/Carleton/Baseball Research/park_factor.csv') %>%
+rename_all(list(tolower)) %>%
+select(2:3)
+lgbabip <- df %>%
+filter(pa > 400) %>%
+group_by(season) %>%
+summarize(lgbabip = sum(babip * pa / sum(pa, na.rm = T), na.rm=T))
+w <- 2/3
+df <- df %>%
+filter(season > 1980) %>%
+select(season, name, playerid, team, pa, babip, woba, wrc, bsr, off, def, rep, lg, war) %>%
+inner_join(lgbabip, by = 'season') %>%
+inner_join(woba, by = 'season') %>%
+inner_join(pf, by = 'team') %>%
+group_by(season) %>%
+mutate(wrcpa = sum(wrc) / sum(pa)) %>%
+ungroup() %>%
+mutate(basic = basic / 100,
+wraa = ((woba - lgwoba)/wobascale)*pa,
+br = wraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+fwar = (br + bsr + def + lg + rep) / rpw) %>%
+select(playerid, name, season, everything()) %>%
+arrange(playerid, season) %>%
+filter(pa > 300) %>%
+group_by(playerid) %>%
+mutate(careerpa = cumsum(pa),
+careerbabip = cummean(babip)) %>%
+ungroup() %>%
+mutate(weight = (1 / (1 + exp(-.005*(careerpa - 1000)))),
+ttbabip = weight*careerbabip + (1-weight)*lgbabip,
+xwoba = w * woba * (ttbabip / babip) + (1-w) * woba,
+xwraa = ((xwoba - lgwoba)/wobascale)*pa,
+xbr = xwraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+xwar = (xbr + bsr + def + lg + rep) / rpw) %>%
+filter(season >= 2010) %>%
+select(playerid, name, season, team, pa, careerpa, babip, careerbabip, lgbabip, woba, xwoba, war, xwar) %>%
+arrange(desc(season), desc(xwar))
+#df %>% write.csv('/users/matt/downloads/xWAR.csv', row.names = F)
+View(df)
+rm(list = ls())
+library(tidyverse)
+df <- read_csv('~/Google Drive/Carleton/Baseball Research/fangraphs_full_unmodified_hitters.csv') %>%
+rename_all(list(tolower))
+woba <- read_csv('~/Google Drive/Carleton/Baseball Research/woba_const.csv') %>%
+rename_all(list(tolower)) %>%
+select(season, woba, wobascale, 'r/pa', 'r/w') %>%
+rename(lgwoba = woba,
+rpa = 'r/pa',
+rpw = 'r/w')
+pf <- read_csv('~/Google Drive/Carleton/Baseball Research/park_factor.csv') %>%
+rename_all(list(tolower)) %>%
+select(2:3)
+lgbabip <- df %>%
+filter(pa > 400) %>%
+group_by(season) %>%
+summarize(lgbabip = sum(babip * pa / sum(pa, na.rm = T), na.rm=T))
+w <- 1
+df <- df %>%
+filter(season > 1980) %>%
+select(season, name, playerid, team, pa, babip, woba, wrc, bsr, off, def, rep, lg, war) %>%
+inner_join(lgbabip, by = 'season') %>%
+inner_join(woba, by = 'season') %>%
+inner_join(pf, by = 'team') %>%
+group_by(season) %>%
+mutate(wrcpa = sum(wrc) / sum(pa)) %>%
+ungroup() %>%
+mutate(basic = basic / 100,
+wraa = ((woba - lgwoba)/wobascale)*pa,
+br = wraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+fwar = (br + bsr + def + lg + rep) / rpw) %>%
+select(playerid, name, season, everything()) %>%
+arrange(playerid, season) %>%
+filter(pa > 300) %>%
+group_by(playerid) %>%
+mutate(careerpa = cumsum(pa),
+careerbabip = cummean(babip)) %>%
+ungroup() %>%
+mutate(weight = (1 / (1 + exp(-.005*(careerpa - 1000)))),
+ttbabip = weight*careerbabip + (1-weight)*lgbabip,
+xwoba = w * woba * (ttbabip / babip) + (1-w) * woba,
+xwraa = ((xwoba - lgwoba)/wobascale)*pa,
+xbr = xwraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+xwar = (xbr + bsr + def + lg + rep) / rpw) %>%
+filter(season >= 2010) %>%
+select(playerid, name, season, team, pa, careerpa, babip, careerbabip, lgbabip, woba, xwoba, war, xwar) %>%
+arrange(desc(season), desc(xwar))
+#df %>% write.csv('/users/matt/downloads/xWAR.csv', row.names = F)
+View(df)
+rm(list = ls())
+library(tidyverse)
+df <- read_csv('~/Google Drive/Carleton/Baseball Research/fangraphs_full_unmodified_hitters.csv') %>%
+rename_all(list(tolower))
+woba <- read_csv('~/Google Drive/Carleton/Baseball Research/woba_const.csv') %>%
+rename_all(list(tolower)) %>%
+select(season, woba, wobascale, 'r/pa', 'r/w') %>%
+rename(lgwoba = woba,
+rpa = 'r/pa',
+rpw = 'r/w')
+pf <- read_csv('~/Google Drive/Carleton/Baseball Research/park_factor.csv') %>%
+rename_all(list(tolower)) %>%
+select(2:3)
+lgbabip <- df %>%
+filter(pa > 400) %>%
+group_by(season) %>%
+summarize(lgbabip = sum(babip * pa / sum(pa, na.rm = T), na.rm=T))
+w <- .75
+df <- df %>%
+filter(season > 1980) %>%
+select(season, name, playerid, team, pa, babip, woba, wrc, bsr, off, def, rep, lg, war) %>%
+inner_join(lgbabip, by = 'season') %>%
+inner_join(woba, by = 'season') %>%
+inner_join(pf, by = 'team') %>%
+group_by(season) %>%
+mutate(wrcpa = sum(wrc) / sum(pa)) %>%
+ungroup() %>%
+mutate(basic = basic / 100,
+wraa = ((woba - lgwoba)/wobascale)*pa,
+br = wraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+fwar = (br + bsr + def + lg + rep) / rpw) %>%
+select(playerid, name, season, everything()) %>%
+arrange(playerid, season) %>%
+filter(pa > 300) %>%
+group_by(playerid) %>%
+mutate(careerpa = cumsum(pa),
+careerbabip = cummean(babip)) %>%
+ungroup() %>%
+mutate(weight = (1 / (1 + exp(-.005*(careerpa - 1000)))),
+ttbabip = weight*careerbabip + (1-weight)*lgbabip,
+xwoba = w * woba * (ttbabip / babip) + (1-w) * woba,
+xwraa = ((xwoba - lgwoba)/wobascale)*pa,
+xbr = xwraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+xwar = (xbr + bsr + def + lg + rep) / rpw) %>%
+filter(season >= 2010) %>%
+select(playerid, name, season, team, pa, careerpa, babip, careerbabip, lgbabip, woba, xwoba, war, xwar) %>%
+arrange(desc(season), desc(xwar))
+#df %>% write.csv('/users/matt/downloads/xWAR.csv', row.names = F)
+View(df)
+rm(list = ls())
+library(tidyverse)
+df <- read_csv('~/Google Drive/Carleton/Baseball Research/fangraphs_full_unmodified_hitters.csv') %>%
+rename_all(list(tolower))
+woba <- read_csv('~/Google Drive/Carleton/Baseball Research/woba_const.csv') %>%
+rename_all(list(tolower)) %>%
+select(season, woba, wobascale, 'r/pa', 'r/w') %>%
+rename(lgwoba = woba,
+rpa = 'r/pa',
+rpw = 'r/w')
+pf <- read_csv('~/Google Drive/Carleton/Baseball Research/park_factor.csv') %>%
+rename_all(list(tolower)) %>%
+select(2:3)
+lgbabip <- df %>%
+filter(pa > 400) %>%
+group_by(season) %>%
+summarize(lgbabip = sum(babip * pa / sum(pa, na.rm = T), na.rm=T))
+w <- .75
+df <- df %>%
+filter(season > 1980) %>%
+select(season, name, playerid, team, pa, babip, woba, wrc, bsr, off, def, rep, lg, war) %>%
+inner_join(lgbabip, by = 'season') %>%
+inner_join(woba, by = 'season') %>%
+inner_join(pf, by = 'team') %>%
+group_by(season) %>%
+mutate(wrcpa = sum(wrc) / sum(pa)) %>%
+ungroup() %>%
+mutate(basic = basic / 100,
+wraa = ((woba - lgwoba)/wobascale)*pa,
+br = wraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+fwar = (br + bsr + def + lg + rep) / rpw) %>%
+select(playerid, name, season, everything()) %>%
+arrange(playerid, season) %>%
+filter(pa > 300) %>%
+group_by(playerid) %>%
+mutate(careerpa = cumsum(pa),
+careerbabip = cummean(babip)) %>%
+ungroup() %>%
+mutate(weight = (1 / (1 + exp(-.005*(careerpa - 1000)))),
+ttbabip = weight*careerbabip + (1-weight)*lgbabip,
+xwoba = w * woba * (ttbabip / babip) + (1-w) * woba,
+xwraa = ((xwoba - lgwoba)/wobascale)*pa,
+xbr = xwraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+xwar = (xbr + bsr + def + lg + rep) / rpw) %>%
+filter(season >= 2010) %>%
+select(playerid, name, season, team, pa, careerpa, babip, careerbabip, lgbabip, woba, xwoba, war, xwar) %>%
+arrange(desc(season), desc(xwar))
+df %>% write.csv('/users/matt/downloads/xWAR.csv', row.names = F)
+View(df)
+(1 / (1 + exp(-.005*(0 - 1000))))
+(1 / (1 + exp(-.005*(1000 - 1000))))
+(1 / (1 + exp(-.005*(2000 - 1000))))
+(1 / (1 + exp(-.005*(2000 - 1500))))
+(1 / (1 + exp(-.005*(0 - 1500))))
+(1 / (1 + exp(-.005*(1500 - 1500))))
+(1 / (1 + exp(-.005*(2000 - 1500))))
+(1 / (1 + exp(-.0025*(2000 - 1500))))
+(1 / (1 + exp(-.0025*(0 - 1500))))
+(1 / (1 + exp(-.0005*(0 - 1500))))
+(1 / (1 + exp(-.0025*(0 - 1500))))
+(1 / (1 + exp(-.0025*(0 - 2000))))
+(1 / (1 + exp(-.0025*(3000 - 2000))))
+(1 / (1 + exp(-.0025*(2000 - 2000))))
+rm(list = ls())
+library(tidyverse)
+df <- read_csv('~/Google Drive/Carleton/Baseball Research/fangraphs_full_unmodified_hitters.csv') %>%
+rename_all(list(tolower))
+woba <- read_csv('~/Google Drive/Carleton/Baseball Research/woba_const.csv') %>%
+rename_all(list(tolower)) %>%
+select(season, woba, wobascale, 'r/pa', 'r/w') %>%
+rename(lgwoba = woba,
+rpa = 'r/pa',
+rpw = 'r/w')
+pf <- read_csv('~/Google Drive/Carleton/Baseball Research/park_factor.csv') %>%
+rename_all(list(tolower)) %>%
+select(2:3)
+lgbabip <- df %>%
+filter(pa > 400) %>%
+group_by(season) %>%
+summarize(lgbabip = sum(babip * pa / sum(pa, na.rm = T), na.rm=T))
+w <- .75
+df <- df %>%
+filter(season > 1980) %>%
+select(season, name, playerid, team, pa, babip, woba, wrc, bsr, off, def, rep, lg, war) %>%
+inner_join(lgbabip, by = 'season') %>%
+inner_join(woba, by = 'season') %>%
+inner_join(pf, by = 'team') %>%
+group_by(season) %>%
+mutate(wrcpa = sum(wrc) / sum(pa)) %>%
+ungroup() %>%
+mutate(basic = basic / 100,
+wraa = ((woba - lgwoba)/wobascale)*pa,
+br = wraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+fwar = (br + bsr + def + lg + rep) / rpw) %>%
+select(playerid, name, season, everything()) %>%
+arrange(playerid, season) %>%
+filter(pa > 300) %>%
+group_by(playerid) %>%
+mutate(careerpa = cumsum(pa),
+careerbabip = cummean(babip)) %>%
+ungroup() %>%
+mutate(weight = (1 / (1 + exp(-.0025*(careerpa - 2000)))),
+ttbabip = weight*careerbabip + (1-weight)*lgbabip,
+xwoba = w * woba * (ttbabip / babip) + (1-w) * woba,
+xwraa = ((xwoba - lgwoba)/wobascale)*pa,
+xbr = xwraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+xwar = (xbr + bsr + def + lg + rep) / rpw) %>%
+filter(season >= 2010) %>%
+select(playerid, name, season, team, pa, careerpa, babip, careerbabip, lgbabip, woba, xwoba, war, xwar) %>%
+arrange(desc(season), desc(xwar))
+df %>% write.csv('/users/matt/downloads/xWAR.csv', row.names = F)
+View(df)
+(1 / (1 + exp(-.0025*(1500 - 2000))))
+(1 / (1 + exp(-.0025*(0 - 2000))))
+(1 / (1 + exp(-.0025*(600 - 2000))))
+(1 / (1 + exp(-.0025*(1200 - 2000))))
+(1 / (1 + exp(-.005*(1200 - 2000))))
+(1 / (1 + exp(-.0025*(1200 - 2000))))
+(1 / (1 + exp(-.0005*(1200 - 2000))))
+(1 / (1 + exp(-.000*(1200 - 2000))))
+(1 / (1 + exp(-.001*(1200 - 2000))))
+(1 / (1 + exp(-.001*(600 - 2000))))
+(1 / (1 + exp(-.001*(00 - 2000))))
+(1 / (1 + exp(-.001*(00 - 2500))))
+(1 / (1 + exp(-.001*(00 - 1800))))
+(1 / (1 + exp(-.0015*(00 - 1800))))
+(1 / (1 + exp(-.0015*(600 - 1800))))
+(1 / (1 + exp(-.0015*(1200 - 1800))))
+(1 / (1 + exp(-.0015*(0 - 1800))))
+rm(list = ls())
+library(tidyverse)
+df <- read_csv('~/Google Drive/Carleton/Baseball Research/fangraphs_full_unmodified_hitters.csv') %>%
+rename_all(list(tolower))
+woba <- read_csv('~/Google Drive/Carleton/Baseball Research/woba_const.csv') %>%
+rename_all(list(tolower)) %>%
+select(season, woba, wobascale, 'r/pa', 'r/w') %>%
+rename(lgwoba = woba,
+rpa = 'r/pa',
+rpw = 'r/w')
+pf <- read_csv('~/Google Drive/Carleton/Baseball Research/park_factor.csv') %>%
+rename_all(list(tolower)) %>%
+select(2:3)
+lgbabip <- df %>%
+filter(pa > 400) %>%
+group_by(season) %>%
+summarize(lgbabip = sum(babip * pa / sum(pa, na.rm = T), na.rm=T))
+w <- .75
+df <- df %>%
+filter(season > 1980) %>%
+select(season, name, playerid, team, pa, babip, woba, wrc, bsr, off, def, rep, lg, war) %>%
+inner_join(lgbabip, by = 'season') %>%
+inner_join(woba, by = 'season') %>%
+inner_join(pf, by = 'team') %>%
+group_by(season) %>%
+mutate(wrcpa = sum(wrc) / sum(pa)) %>%
+ungroup() %>%
+mutate(basic = basic / 100,
+wraa = ((woba - lgwoba)/wobascale)*pa,
+br = wraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+fwar = (br + bsr + def + lg + rep) / rpw) %>%
+select(playerid, name, season, everything()) %>%
+arrange(playerid, season) %>%
+filter(pa > 300) %>%
+group_by(playerid) %>%
+mutate(careerpa = cumsum(pa),
+careerbabip = cummean(babip)) %>%
+ungroup() %>%
+mutate(weight = ifelse(careerpa <= 200, 0, (1 / (1 + exp(-.0015*(careerpa - 1800))))),
+ttbabip = weight*careerbabip + (1-weight)*lgbabip,
+xwoba = w * woba * (ttbabip / babip) + (1-w) * woba,
+xwraa = ((xwoba - lgwoba)/wobascale)*pa,
+xbr = xwraa + (rpa - (basic * rpa))*pa + (rpa - wrcpa)*pa,
+xwar = (xbr + bsr + def + lg + rep) / rpw) %>%
+filter(season >= 2010) %>%
+select(playerid, name, season, team, pa, careerpa, babip, careerbabip, lgbabip, woba, xwoba, war, xwar) %>%
+arrange(desc(season), desc(xwar))
+df %>% write.csv('/users/matt/downloads/xWAR.csv', row.names = F)
+View(df)
