@@ -16,7 +16,7 @@ h_res = pd.DataFrame(columns=['ID', 'Name', 'Points'])
 p_na = pd.DataFrame(columns=['ID', 'Name'])
 h_na = pd.DataFrame(columns=['ID', 'Name'])
 
-roster_url = "https://ottoneu.fangraphs.com/1087/rosterexport"
+roster_url = "https://ottoneu.fangraphs.com/1139/rosterexport"
 f = requests.get(roster_url)
 
 # get list of players on my team
@@ -110,6 +110,7 @@ email = email.format(h=h_res.to_html(index=False),
 
 date = datetime.datetime.now().date()
 
+print(email)
 sender_email = "mrkaye97@gmail.com"
 receiver_email = ["mrkaye97@gmail.com", "masonpropper@gmail.com"]
 password = str(sys.argv[1])
