@@ -8,6 +8,10 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import datetime
 import sys
+from selenium import webdriver
+
+
+driver = webdriver.Chrome()
 
 hitters = range(4, 15)
 pitchers = range(3, 13)
@@ -25,7 +29,7 @@ team = (pd
         .rename(index=str, columns={'Team Name': 'TeamName',
                                     'FG MajorLeagueID': 'FGID',
                                     'Position(s)': 'Position'})
-        .query("TeamName.str.contains('Sabathtub')")
+        .query("TeamName == 'C.C. Sabathtub'")
         .dropna(axis=0)
         .assign(FGID=lambda x: x.FGID.apply(int))
         .filter(['FGID', 'Name', 'Position'])
@@ -33,42 +37,64 @@ team = (pd
 
 # loop over players
 # load each fangraphs page
-for temp in team.itertuples():
-    url = "https://www.fangraphs.com/statss.aspx?playerid={pid}".format(pid=temp.FGID)
 
-    page = requests.get(url)
-    doc = lh.fromstring(page.content)
+hpoints = pd.DataFrame(
+    {
+        'stat': ['AB', 'H', '2B', '3B', 'HR', 'BB', 'HBP', 'CS', 'SB'],
+        'pts': [-1, 5.6, 2.9, 5.7, 9.4, 3, 3, 1.9, -2.8]
+    }
+)
+
+ppoints = pd.DataFrame(
+    {
+        'stat': ['IP', 'SO', 'H', 'BB', 'HBP', 'HR', 'SV', 'HOLDS'],
+        'pts': [7.4, 2.0, -2.6, -3, -3, -12.3, 5, 4]
+    }
+)
+
+for temp in team.itertuples():
+
+    driver.get("https://www.fangraphs.com/statss.aspx?playerid={pid}".format(pid=temp.FGID))
 
     try:
+        tab = driver.find_element_by_xpath('//*[@id="daily-projections"]/div[3]/div/div/div/div[1]').text.split("\n")[:2]
+
+        proj = (
+            pd.DataFrame.from_records({'stat': pd.Series(tab[0].split(" ")[2:]),
+                  'val': pd.Series(tab[1].split(" ")[4:])})
+            .assign(val=lambda x: pd.to_numeric(x.val, errors='coerce'))
+        )
+
         if temp.Position in ["SP", "RP", "SP/RP"]:
-            tr_elements = [doc.xpath('//*[@id="SeasonStats1_dgSeason24_ctl00__0"]/td[{i}]'.format(i=i))
-                           for i in pitchers]
 
-            pts = np.array([0, 7.4, 0, -2.6, 0, 0, 0, -12.3, -3.0, 2.0])
+            daypts = (
+                pd.merge(proj, ppoints, how='inner', on='stat')
+                .assign(prod=lambda x: x.val * x.pts)
+                .sum()
+            )['prod']
 
-            proj = np.array([float(t[0].text_content())
-                             for t in tr_elements])
+            ip = proj.query("stat=='IP'").iloc[:,1].values[0]
 
             curr = {'ID': temp.FGID,
                     'Name': temp.Name,
-                    'Innings': proj[1],
-                    'Points': np.dot(pts, proj),
-                    'P/IP': np.dot(pts, proj) / proj[1]
+                    'Innings': ip,
+                    'Points': daypts,
+                    'P/IP': daypts / ip
                     }
 
             p_res = p_res.append(curr, ignore_index=True)
 
         else:
-            tr_elements = [doc.xpath('//*[@id="SeasonStats1_dgSeason24_ctl00__0"]/td[{i}]'.format(i=i))
-                           for i in hitters]
 
-            pts = np.array([5.6, 0, 2.9, 5.7, 9.4, 0, 0, 1.9, -2.8, 3.0, 0])
-            proj = np.array([float(t[0].text_content())
-                             for t in tr_elements])
+            daypts = (
+                pd.merge(proj, hpoints, how='inner', on='stat')
+                .assign(prod=lambda x: x.val * x.pts)
+                .sum()
+            )['prod']
 
             curr = {'ID': temp.FGID,
                     'Name': temp.Name,
-                    'Points': np.dot(pts, proj) - 4.5}
+                    'Points': daypts - 4.5}
 
             h_res = h_res.append(curr, ignore_index=True)
 
@@ -110,7 +136,9 @@ email = email.format(h=h_res.to_html(index=False),
 
 date = datetime.datetime.now().date()
 
-print(email)
+print(h_res)
+print(p_res)
+
 sender_email = "mrkaye97@gmail.com"
 receiver_email = ["mrkaye97@gmail.com", "masonpropper@gmail.com"]
 password = str(sys.argv[1])
