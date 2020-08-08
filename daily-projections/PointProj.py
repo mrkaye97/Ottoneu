@@ -52,66 +52,79 @@ ppoints = pd.DataFrame(
     }
 )
 
+# team = team.query("FGID==12970")
+
 for temp in team.itertuples():
 
-    driver.get("https://www.fangraphs.com/statss.aspx?playerid={pid}".format(pid=temp.FGID))
+    tries = 0
+    while tries < 5:
 
-    try:
-        tab = driver.find_element_by_xpath('//*[@id="daily-projections"]/div[3]/div/div/div/div[1]').text.split("\n")[:2]
+        try:
+            tries += 1
+            driver.implicitly_wait(5)
+            driver.get("https://www.fangraphs.com/statss.aspx?playerid={pid}".format(pid=temp.FGID))
+            driver.implicitly_wait(5)
 
-        proj = (
-            pd.DataFrame.from_records({'stat': pd.Series(tab[0].split(" ")[2:]),
-                  'val': pd.Series(tab[1].split(" ")[4:])})
-            .assign(val=lambda x: pd.to_numeric(x.val, errors='coerce'))
-        )
+            tab = driver.find_element_by_xpath('//*[@id="daily-projections"]/div[3]/div/div/div/div[1]').text.split("\n")[:2]
 
-        if temp.Position in ["SP", "RP", "SP/RP"]:
+            proj = (
+                pd.DataFrame.from_records({'stat': pd.Series(tab[0].split(" ")[2:]),
+                                           'val': pd.Series(tab[1].split(" ")[4:])})
+                    .assign(val=lambda x: pd.to_numeric(x.val, errors='coerce'))
+            )
 
-            daypts = (
-                pd.merge(proj, ppoints, how='inner', on='stat')
-                .assign(prod=lambda x: x.val * x.pts)
-                .sum()
-            )['prod']
+            if temp.Position in ["SP", "RP", "SP/RP"]:
 
-            ip = proj.query("stat=='IP'").iloc[:,1].values[0]
+                daypts = (
+                    pd.merge(proj, ppoints, how='inner', on='stat')
+                        .assign(prod=lambda x: x.val * x.pts)
+                        .sum()
+                )['prod']
 
-            curr = {'ID': temp.FGID,
-                    'Name': temp.Name,
-                    'Innings': ip,
-                    'Points': daypts,
-                    'P/IP': daypts / ip
-                    }
+                ip = proj.query("stat=='IP'").iloc[:, 1].values[0]
 
-            p_res = p_res.append(curr, ignore_index=True)
+                curr = {'ID': temp.FGID,
+                        'Name': temp.Name,
+                        'Innings': ip,
+                        'Points': daypts,
+                        'P/IP': daypts / ip
+                        }
 
-        else:
+                p_res = p_res.append(curr, ignore_index=True)
 
-            daypts = (
-                pd.merge(proj, hpoints, how='inner', on='stat')
-                .assign(prod=lambda x: x.val * x.pts)
-                .sum()
-            )['prod']
+            else:
 
-            curr = {'ID': temp.FGID,
-                    'Name': temp.Name,
-                    'Points': daypts - 4.5}
+                daypts = (
+                    pd.merge(proj, hpoints, how='inner', on='stat')
+                        .assign(prod=lambda x: x.val * x.pts)
+                        .sum()
+                )['prod']
 
-            h_res = h_res.append(curr, ignore_index=True)
+                curr = {'ID': temp.FGID,
+                        'Name': temp.Name,
+                        'Points': daypts - 4.5}
 
-    except:
-        if temp.Position in ["SP", "RP", "SP/RP"]:
-            curr = {'ID': temp.FGID,
-                    'Name': temp.Name,
-                    }
+                h_res = h_res.append(curr, ignore_index=True)
 
-            p_na = p_na.append(curr, ignore_index=True)
+            tries = 5
 
-        else:
-            curr = {'ID': temp.FGID,
-                    'Name': temp.Name,
-                    }
+        except:
+            if tries < 5:
+                pass
+            else:
+                if temp.Position in ["SP", "RP", "SP/RP"]:
+                    curr = {'ID': temp.FGID,
+                            'Name': temp.Name,
+                            }
 
-            h_na = h_na.append(curr, ignore_index=True)
+                    p_na = p_na.append(curr, ignore_index=True)
+
+                else:
+                    curr = {'ID': temp.FGID,
+                            'Name': temp.Name,
+                            }
+
+                    h_na = h_na.append(curr, ignore_index=True)
 
 h_res = (h_res
          .sort_values(by='Points', ascending=False)
@@ -140,7 +153,7 @@ print(h_res)
 print(p_res)
 
 sender_email = "mrkaye97@gmail.com"
-receiver_email = ["mrkaye97@gmail.com", "masonpropper@gmail.com"]
+receiver_email = ["mrkaye97@gmail.com"]
 password = str(sys.argv[1])
 
 message = MIMEMultipart("alternative")
