@@ -153,7 +153,7 @@ print(h_res)
 print(p_res)
 
 sender_email = "mrkaye97@gmail.com"
-receiver_email = ["mrkaye97@gmail.com"]
+receiver_email = ["mrkaye97@gmail.com", "masonpropper@gmail.com"]
 password = str(sys.argv[1])
 
 message = MIMEMultipart("alternative")
