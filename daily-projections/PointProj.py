@@ -1,7 +1,6 @@
 import requests
-import lxml.html as lh
-import numpy as np
 import pandas as pd
+import numpy as np
 import io
 import smtplib, ssl
 from email.mime.text import MIMEText
@@ -9,30 +8,47 @@ from email.mime.multipart import MIMEMultipart
 import datetime
 import sys
 from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
 
-
-driver = webdriver.Chrome()
-
-hitters = range(4, 15)
-pitchers = range(3, 13)
-p_res = pd.DataFrame(columns=['ID', 'Name', 'Points', 'Innings', 'P/IP'])
-h_res = pd.DataFrame(columns=['ID', 'Name', 'Points'])
-p_na = pd.DataFrame(columns=['ID', 'Name'])
-h_na = pd.DataFrame(columns=['ID', 'Name'])
 
 roster_url = "https://ottoneu.fangraphs.com/1139/rosterexport"
 f = requests.get(roster_url)
 
+mlb_team_map = pd.DataFrame({
+    'abbr': [
+        'NYY', 'TBR', 'BOS', 'BAL', 'TOR',   ## AL East
+        'MIN', 'DET', 'KCR', 'CLE', 'CHW',   ## AL Central
+        'HOU', 'OAK', 'LAA', 'SEA', 'TEX',   ## AL West
+        'NYM', 'PHI', 'WSN', 'ATL', 'MIA',   ## NL East
+        'CIN', 'MIL', 'STL', 'CHC', 'PIT',   ## NL Central
+        'COL', 'ARI', 'LAD', 'SDP', 'SFG'    ## NL West
+    ],
+    'Team': [
+        'Yankees', 'Rays', 'Red Sox', 'Orioles', 'Blue Jays',
+        'Twins', 'Tigers', 'Royals', 'Indians', 'White Sox',
+        'Astros', 'Athletics', 'Angels', 'Mariners', 'Rangers',
+        'Mets', 'Phillies', 'Nationals', 'Braves', 'Marlins',
+        'Reds', 'Brewers', 'Cardinals', 'Cubs', 'Pirates',
+        'Rockies', 'Diamondbacks', 'Dodgers', 'Padres', 'Giants'
+    ]
+}
+)
 # get list of players on my team
 team = (pd
         .read_csv(io.BytesIO(f.content))
         .rename(index=str, columns={'Team Name': 'TeamName',
                                     'FG MajorLeagueID': 'FGID',
-                                    'Position(s)': 'Position'})
+                                    'Position(s)': 'Position',
+                                    'MLB Team': 'abbr'})
         .query("TeamName == 'C.C. Sabathtub'")
         .dropna(axis=0)
-        .assign(FGID=lambda x: x.FGID.apply(int))
-        .filter(['FGID', 'Name', 'Position'])
+        .merge(mlb_team_map, on='abbr')
+        .filter(items=['Name', 'Team'])
+        .replace({'Name': {'Nick Castellanos': 'Nicholas Castellanos',
+                           }})
         )
 
 # loop over players
@@ -52,105 +68,142 @@ ppoints = pd.DataFrame(
     }
 )
 
-# team = team.query("FGID==12970")
 
-for temp in team.itertuples():
+def get_hitter_proj():
+    driver = webdriver.Chrome()
 
-    tries = 0
-    while tries < 5:
+    driver.get('https://www.fangraphs.com/dailyprojections.aspx?pos=all&stats=bat&type=sabersim&team=0&lg=all&players=0')
 
-        try:
-            tries += 1
-            driver.implicitly_wait(5)
-            driver.get("https://www.fangraphs.com/statss.aspx?playerid={pid}".format(pid=temp.FGID))
-            driver.implicitly_wait(5)
+    numrows = int(WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.XPATH, '/html/body/form/div[3]/div[2]/span/div/table/tfoot/tr/td/div/div[5]/strong[1]'))).text)
+  #  numrows = int(driver.find_element_by_xpath('/html/body/form/div[3]/div[2]/span/div/table/tfoot/tr/td/div/div[5]/strong[1]').text)
 
-            tab = driver.find_element_by_xpath('//*[@id="daily-projections"]/div[3]/div/div/div/div[1]').text.split("\n")[:2]
+    driver.refresh()
+    driver.implicitly_wait(10)
+    players_per_page_dropdown = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.XPATH, '/html/body/form/div[3]/div[2]/span/div/table/tfoot/tr/td/div/div[4]/div/span/button')))
+   # players_per_page_dropdown = driver.find_element_by_xpath('/html/body/form/div[3]/div[2]/span/div/table/tfoot/tr/td/div/div[4]/div/span/button')
+    players_per_page_dropdown.click()
+    driver.implicitly_wait(10)
+    ppp1000 = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.XPATH, '/html/body/form/div[1]/div/div/ul/li[7]')))
+   # ppp1000 = driver.find_element_by_xpath('/html/body/form/div[1]/div/div/ul/li[7]')
+    ppp1000.click()
+    driver.implicitly_wait(10)
+    colnames = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.XPATH, '/html/body/form/div[3]/div[2]/span/div/table/thead'))).text.split(" ")
+  #  colnames = driver.find_element_by_xpath('/html/body/form/div[3]/div[2]/span/div/table/thead').text.split(" ")
+    numcols = len(colnames)
 
-            proj = (
-                pd.DataFrame.from_records({'stat': pd.Series(tab[0].split(" ")[2:]),
-                                           'val': pd.Series(tab[1].split(" ")[4:])})
-                    .assign(val=lambda x: pd.to_numeric(x.val, errors='coerce'))
-            )
+    mat = np.array(['']*(numrows*numcols), dtype=object)
 
-            if temp.Position in ["SP", "RP", "SP/RP"]:
+    for row in range(1, numrows+1):
+        for col in range(1, (numcols+1)):
+            cell = driver.find_element_by_xpath('/html/body/form/div[3]/div[2]/span/div/table/tbody/tr[' + str(row) + ']/td[' + str(col) + ']').text
+            mat[(row - 1) * (numcols) + (col-1)] = cell
 
-                daypts = (
-                    pd.merge(proj, ppoints, how='inner', on='stat')
-                        .assign(prod=lambda x: x.val * x.pts)
-                        .sum()
-                )['prod']
+        print(str(round(100 * row / numrows)) + "% Done")
 
-                ip = proj.query("stat=='IP'").iloc[:, 1].values[0]
+    hitters = (
+        pd.DataFrame(mat.reshape((numrows, numcols)), columns=colnames)
+        .assign(AB=lambda x: x.PA.astype(float) - x.BB.astype(float))
+        .melt(id_vars=['Name', 'Team', 'Game', 'Pos'], var_name = 'stat')
+        .merge(hpoints, on = 'stat', how = 'inner')
+        .astype({'value': float,
+                 'pts': float}, errors='ignore')
+        .assign(Points=lambda x: x.pts * x.value)
+        .groupby(['Name', 'Team'])
+        .sum()
+        .filter(items=['Points'])
+        .reset_index()
+        .sort_values('Points', ascending=False)
+        .merge(team, on=['Name', 'Team'], how = 'inner')
+    )
 
-                curr = {'ID': temp.FGID,
-                        'Name': temp.Name,
-                        'Innings': ip,
-                        'Points': daypts,
-                        'P/IP': daypts / ip
-                        }
+    print(hitters.head())
 
-                p_res = p_res.append(curr, ignore_index=True)
+    driver.quit()
+    return hitters
 
-            else:
 
-                daypts = (
-                    pd.merge(proj, hpoints, how='inner', on='stat')
-                        .assign(prod=lambda x: x.val * x.pts)
-                        .sum()
-                )['prod']
+def get_pitcher_proj():
+    driver = webdriver.Chrome()
 
-                curr = {'ID': temp.FGID,
-                        'Name': temp.Name,
-                        'Points': daypts - 4.5}
+    driver.get('https://www.fangraphs.com/dailyprojections.aspx?pos=all&stats=pit&type=sabersim&team=0&lg=all&players=0')
 
-                h_res = h_res.append(curr, ignore_index=True)
+    numrows = int(WebDriverWait(driver, 3).until(EC.presence_of_element_located(
+        (By.XPATH, '/html/body/form/div[3]/div[2]/span/div/table/tfoot/tr/td/div/div[5]/strong[1]'))).text)
+    #  numrows = int(driver.find_element_by_xpath('/html/body/form/div[3]/div[2]/span/div/table/tfoot/tr/td/div/div[5]/strong[1]').text)
 
-            tries = 5
+    driver.refresh()
+    driver.implicitly_wait(10)
+    players_per_page_dropdown = WebDriverWait(driver, 3).until(EC.presence_of_element_located(
+        (By.XPATH, '/html/body/form/div[3]/div[2]/span/div/table/tfoot/tr/td/div/div[4]/div/span/button')))
+    # players_per_page_dropdown = driver.find_element_by_xpath('/html/body/form/div[3]/div[2]/span/div/table/tfoot/tr/td/div/div[4]/div/span/button')
+    players_per_page_dropdown.click()
+    driver.implicitly_wait(10)
+    ppp1000 = WebDriverWait(driver, 3).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/form/div[1]/div/div/ul/li[7]')))
+    # ppp1000 = driver.find_element_by_xpath('/html/body/form/div[1]/div/div/ul/li[7]')
+    ppp1000.click()
+    driver.implicitly_wait(10)
+    colnames = WebDriverWait(driver, 3).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/form/div[3]/div[2]/span/div/table/thead'))).text.split(
+        " ")
+    #  colnames = driver.find_element_by_xpath('/html/body/form/div[3]/div[2]/span/div/table/thead').text.split(" ")
+    numcols = len(colnames)
 
-        except:
-            if tries < 5:
-                pass
-            else:
-                if temp.Position in ["SP", "RP", "SP/RP"]:
-                    curr = {'ID': temp.FGID,
-                            'Name': temp.Name,
-                            }
+    mat = np.array([''] * (numrows * numcols), dtype=object)
 
-                    p_na = p_na.append(curr, ignore_index=True)
+    for row in range(1, numrows+1):
+        for col in range(1, (numcols+1)):
+            cell = driver.find_element_by_xpath('/html/body/form/div[3]/div[2]/span/div/table/tbody/tr[' + str(row) + ']/td[' + str(col) + ']').text
+            mat[(row - 1) * (numcols) + (col-1)] = cell
 
-                else:
-                    curr = {'ID': temp.FGID,
-                            'Name': temp.Name,
-                            }
+        print(str(round(100 * row / numrows)) + "% Done")
 
-                    h_na = h_na.append(curr, ignore_index=True)
+    ip = (
+        pd.DataFrame(mat.reshape((numrows, numcols)), columns=colnames)
+        .filter(items=['Name', 'Team', 'IP'])
+    )
+    pitchers = (
+        pd.DataFrame(mat.reshape((numrows, numcols)), columns=colnames)
+        .melt(id_vars=['Name', 'Team', 'Game'], var_name = 'stat')
+        .merge(ppoints, on = 'stat', how = 'inner')
+        .astype({'value': float,
+                 'pts': float}, errors='ignore')
+        .assign(Points=lambda x: x.pts * x.value)
+        .groupby(['Name', 'Team'])
+        .sum()
+        .filter(items=['Points'])
+        .reset_index()
+        .sort_values('Points', ascending=False)
+        .merge(team, on=['Name', 'Team'], how = 'inner')
+        .merge(ip, how='inner', on=['Name', 'Team'])
+        .assign(PIP=lambda x: x.Points / x.IP.astype(float))
+        .rename(columns={'PIP': 'P/IP'})
+    )
 
-h_res = (h_res
-         .sort_values(by='Points', ascending=False)
-         .reset_index()
-         .filter(['Name', 'Points'])
-         )
-p_res = (p_res
-         .sort_values(by='P/IP', ascending=False)
-         .reset_index()
-         .filter(['Name', 'Points', 'Innings', 'P/IP'])
-         )
+    print(pitchers.head())
+    return pitchers
+
+
+hitters = get_hitter_proj()
+pitchers = get_pitcher_proj()
+
+withproj = (
+    (pitchers.filter(items =['Name']))
+    .append([(hitters.filter(items=['Name']))])
+)
+
+noproj = team[~team.Name.isin(withproj.Name)]
+
 
 email = "Hitter Projections: {h} <br> " \
         "Pitcher Projections: {p} <br> <br>" \
-        "Hitters Missing Data: {hna} <br>" \
-        "Pitchers Missing Data: {pna}"
+        "Players Missing Data: {na}"
 
-email = email.format(h=h_res.to_html(index=False),
-                     p=p_res.to_html(index=False),
-                     hna=h_na.to_html(index=False),
-                     pna=p_na.to_html(index=False))
+email = email.format(h=hitters.to_html(index=False),
+                     p=pitchers.to_html(index=False),
+                     na=noproj.to_html(index=False))
 
 date = datetime.datetime.now().date()
-
-print(h_res)
-print(p_res)
 
 sender_email = "mrkaye97@gmail.com"
 receiver_email = ["mrkaye97@gmail.com", "masonpropper@gmail.com"]
@@ -182,5 +235,3 @@ with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
         sender_email, receiver_email, message.as_string()
     )
 
-
-driver.quit()
